@@ -142,18 +142,25 @@ function paint(k){const el=document.querySelector(`.track[data-k="${k}"]`);if(!e
 function setSync(m){$('#sync').textContent=m}
 function ready(){return ENDPOINT.startsWith('https://')&&!!LS('pass')&&!!LS('name')}
 function lockUI(){canWrite=ready();document.querySelectorAll('.track').forEach(t=>paint(t.dataset.k))}
-async function load(){if(!ready())return;
-  try{const r=await fetch(ENDPOINT+'?pass='+encodeURIComponent(LS('pass')));const j=await r.json();
+let inflight=false,pending={},lastOk=0;
+function applyCalls(fresh){const now=Date.now();
+  for(const k in pending){if(now-pending[k]>15000)delete pending[k];else if(calls[k])fresh[k]=calls[k]}
+  calls=fresh;try{localStorage.setItem('calls',JSON.stringify(calls))}catch(_){}
+  if($('#cs').value)render();else document.querySelectorAll('.track').forEach(t=>paint(t.dataset.k));}
+function status(){const n=Object.values(calls).filter(c=>c.status&&c.status!=='Not called').length;
+  const s=lastOk?Math.round((Date.now()-lastOk)/1000):null;
+  setSync(`${s===null?'Connecting…':s<10?'Live':'Last synced '+s+'s ago'} · ${n} of ${D.length} leads worked · changes from teammates show within about 5 seconds.`)}
+async function load(){if(!ready()||inflight)return;inflight=true;
+  try{const r=await fetch(ENDPOINT+'?pass='+encodeURIComponent(LS('pass'))+'&t='+Date.now(),{cache:'no-store'});const j=await r.json();
     if(!j.ok){if(j.error==='passcode'){setSync('That passcode is wrong. Enter the team passcode above.');$('#who').hidden=false;$('#me').hidden=true;canWrite=false}return}
-    calls=j.calls||{};const n=Object.values(calls).filter(c=>c.status&&c.status!=='Not called').length;
-    setSync(`Statuses and notes save automatically and refresh every 20 seconds. ${n} of ${D.length} leads worked so far.`);
-    if($('#cs').value)render();else document.querySelectorAll('.track').forEach(t=>paint(t.dataset.k));
-  }catch(e){setSync('Could not reach the call log. Check your connection; it will retry.')}}
+    lastOk=Date.now();applyCalls(j.calls||{});status();
+  }catch(e){setSync('Could not reach the call log. Check your connection; it will retry.')}
+  finally{inflight=false}}
 async function save(k,patch,name){if(!ready())return;const prev=calls[k]||{};
   const body={status:prev.status||'Not called',note:prev.note||'',...patch,by:LS('name'),at:new Date().toISOString()};
-  calls[k]=body;paint(k);
+  calls[k]=body;pending[k]=Date.now();paint(k);try{localStorage.setItem('calls',JSON.stringify(calls))}catch(_){}
   try{const r=await fetch(ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({pass:LS('pass'),key:k,business:name,...body})});
-    const j=await r.json();if(!j.ok)setSync(j.error==='passcode'?'That passcode is wrong. Enter the team passcode above.':'Could not save that change. Try again.');}
+    const j=await r.json();if(!j.ok)setSync(j.error==='passcode'?'That passcode is wrong. Enter the team passcode above.':'Could not save that change. Try again.');else{setTimeout(()=>{delete pending[k];load()},300)}}
   catch(e){setSync('Could not save that change. Check your connection and try again.')}}
 document.addEventListener('change',e=>{const t=e.target.closest('.track');if(!t)return;const k=t.dataset.k;const nm=t.closest('.lead').querySelector('.name').textContent;
   if(e.target.classList.contains('st'))save(k,{status:e.target.value},nm);
@@ -163,13 +170,15 @@ $('#who').addEventListener('submit',e=>{e.preventDefault();const n=$('#yname').v
   LS('name',n);LS('pass',p);$('#who').hidden=true;$('#me').hidden=false;$('#mename').textContent=n;lockUI();setSync('Loading call log…');load()});
 $('#change').addEventListener('click',()=>{$('#who').hidden=false;$('#me').hidden=true;$('#yname').value=LS('name');$('#ypass').value=LS('pass')});
 (()=>{
+  try{calls=JSON.parse(localStorage.getItem('calls')||'{}')||{}}catch(_){calls={}}
   if(!ENDPOINT.startsWith('https://')){setSync('Call logging is not connected yet.');$('#who').hidden=true;lockUI();return}
-  if(ready()){$('#who').hidden=true;$('#me').hidden=false;$('#mename').textContent=LS('name');setSync('Loading call log…')}
+  if(ready()){$('#who').hidden=true;$('#me').hidden=false;$('#mename').textContent=LS('name');setSync('Syncing…')}
   else setSync('Enter your name and the team passcode to log calls.');
-  setTimeout(()=>{lockUI();load()},0);setInterval(()=>{if(!document.hidden)load()},20000);
+  setTimeout(()=>{lockUI();load()},0);
+  setInterval(()=>{if(!document.hidden)load()},5000);setInterval(()=>{if(lastOk)status()},5000);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)load()});
+  window.addEventListener('focus',load);
 })();
-
 
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function label(u){try{const h=new URL(u).hostname.replace(/^www\.|^m\./,'');const m={'facebook.com':'Facebook','instagram.com':'Instagram','yelp.com':'Yelp','yellowpages.com':'YellowPages','bbb.org':'BBB','nextdoor.com':'Nextdoor','houzz.com':'Houzz','angi.com':'Angi','google.com':'Google Maps','maps.google.com':'Google Maps','mapquest.com':'MapQuest','manta.com':'Manta','homeadvisor.com':'HomeAdvisor','thumbtack.com':'Thumbtack','linkedin.com':'LinkedIn','tiktok.com':'TikTok','x.com':'X','twitter.com':'X','opencorporates.com':'OpenCorporates'};return m[h]||h}catch(e){return 'Link'}}
