@@ -1,6 +1,6 @@
 # Website Call List
 
-Cincinnati-area small businesses with no website, for website sales calls. The page is `index.html`, served by GitHub Pages.
+Small businesses with no website, across the U.S., for website sales calls. Each lead shows its local time. The page is `index.html`, served by GitHub Pages.
 
 ## Call logging setup (one time)
 
