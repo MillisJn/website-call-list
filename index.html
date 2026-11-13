@@ -74,6 +74,8 @@ button.copy:hover{color:var(--fg);border-color:var(--muted)}
 .who-bar button{font:600 14px var(--body);color:var(--bg);background:var(--accent);border:0;border-radius:6px;padding:9px 14px;cursor:pointer}
 .linkbtn{font:inherit;color:var(--accent);background:none;border:0;padding:0;cursor:pointer;text-decoration:underline}
 
+a.act{display:inline-flex!important;align-items:center;gap:6px;font-size:14px!important;border-radius:8px!important;padding:8px 14px!important;min-height:38px}
+
 .clock{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;padding:2px 8px;border-radius:99px;background:var(--chip);color:var(--fg)}
 .clock i{width:8px;height:8px;border-radius:50%;background:var(--muted)}
 .c-good i{background:var(--accent)}.c-good{background:var(--accent-soft)}
@@ -82,7 +84,7 @@ a.name{color:var(--fg);text-decoration:none}a.name:hover{color:var(--accent);tex
 a.addr{color:var(--muted);text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}a.addr:hover{color:var(--accent)}
 a.addr::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--accent);margin-right:7px;vertical-align:1px}
 button.tlink{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px}button.tlink:hover{color:var(--accent)}
-a.act{flex:none;text-decoration:none;font:600 12px var(--body);color:var(--bg);background:var(--accent);border-radius:5px;padding:4px 10px;text-decoration:none}
+a.act{flex:none;text-decoration:none;display:inline-flex;align-items:center;gap:6px;font:600 14px var(--body);color:var(--bg);background:var(--accent);border-radius:8px;padding:8px 14px;text-decoration:none;min-height:38px}
 
 a.act:hover{filter:brightness(1.1)}
 #toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);opacity:0;pointer-events:none;background:var(--fg);color:var(--bg);font-size:14px;padding:10px 14px;border-radius:8px;max-width:calc(100% - 32px);transition:opacity .2s,transform .2s;z-index:20}
@@ -199,9 +201,10 @@ function fill(sel,key,all){const v=[...new Set(D.map(r=>r[key]).filter(Boolean))
 fill('#trade','trade','All trades');fill('#town','town','All towns');
 const st=[['leads',D.length],['with email',D.filter(r=>r.email).length],['on Facebook',D.filter(r=>r.links.some(l=>l.includes('facebook.com'))).length],['High priority',D.filter(r=>r.priority==='High').length]];
 $('#stats').innerHTML=st.map(([k,v])=>`<span><b>${v}</b>${k}</span>`).join('');
+const ICON={phone:'<svg aria-hidden="true" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>',email:'<svg aria-hidden="true" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg>'};
 function line(v,kind,r){if(!v)return `<div class="cline none"><span>No public ${kind}</span></div>`;
   const href=kind==='phone'?'tel:+1'+String(v).replace(/\D/g,'').slice(-10):'mailto:'+v+'?subject='+encodeURIComponent('A website for '+r.name);
-  return `<div class="cline"><a class="act" href="${esc(href)}">${kind==='phone'?'Call':'Email'}</a><span class="val">${esc(v)}</span><button class="copy" data-v="${esc(v)}" type="button">Copy</button></div>`}
+  return `<div class="cline"><a class="act" href="${esc(href)}">${ICON[kind]}<span>${kind==='phone'?'Call':'Email'}</span></a><span class="val">${esc(v)}</span><button class="copy" data-v="${esc(v)}" type="button">Copy</button></div>`}
 const maps=r=>'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(r.name+' '+(r.address||r.town));
 const gsearch=r=>'https://www.google.com/search?q='+encodeURIComponent(r.name+' '+(r.town||'Cincinnati'));
 function render(){
