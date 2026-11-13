@@ -235,7 +235,12 @@ document.addEventListener('click',e=>{const tl=e.target.closest('button.tlink');
   const b=e.target.closest('button.copy');if(!b)return;const v=b.dataset.v;
   const ok=()=>{b.textContent='Copied';setTimeout(()=>b.textContent='Copy',1200)};
   (navigator.clipboard?navigator.clipboard.writeText(v):Promise.reject()).then(ok).catch(()=>{const s=b.previousElementSibling;const r=document.createRange();r.selectNodeContents(s);const g=getSelection();g.removeAllRanges();g.addRange(r)})});
-['#q','#when','#trade','#town','#pri','#cs'].forEach(s=>$(s).addEventListener('input',render));
+const FILTERS=['#q','#when','#trade','#town','#pri','#cs'];
+const mem=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(_){return null}};
+FILTERS.forEach(f=>{const el=$(f),v=mem('f'+f);if(v!==null&&(el.tagName!=='SELECT'||[...el.options].some(o=>o.value===v)))el.value=v;
+  el.addEventListener('input',()=>{mem('f'+f,el.value);render()})});
+let _st;addEventListener('scroll',()=>{clearTimeout(_st);_st=setTimeout(()=>mem('scrollY',String(Math.round(scrollY))),200)},{passive:true});
+setTimeout(()=>{const y=+mem('scrollY')||0;if(y)scrollTo(0,y)},50);
 render();
 setInterval(()=>{document.querySelectorAll('.clock').forEach(c=>{const w=document.createElement('span');w.innerHTML=clock({tz:c.dataset.tz});c.replaceWith(w.firstChild)});if($('#when').value==='now')render()},60000);
 </script>
