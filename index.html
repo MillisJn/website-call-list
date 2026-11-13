@@ -128,7 +128,7 @@ function toast(m){let t=document.getElementById('toast');if(!t){t=document.creat
 const STATUSES=['Not called','No answer','Left voicemail','Call back','Interested','Not interested','Sold','Bad number'];
 const key=r=>String(r.phone).replace(/\D/g,'').slice(-10);
 let calls={},canWrite=true;
-const ENDPOINT='';
+const ENDPOINT='https://script.google.com/macros/s/AKfycby9qiEwlbk7yH-9emNsr6BVa9vePWMzV5iKdvTe_xJNHp3ISJ-gQ1YesAb6BwZ46wUxFg/exec';
 const LS=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k)||'';localStorage.setItem(k,v)}catch(_){return ''}};
 $('#cs').innerHTML+=STATUSES.map(x=>`<option>${x}</option>`).join('');
 function ago(iso){const m=Math.round((Date.now()-Date.parse(iso))/60000);if(!(m>=0))return '';if(m<1)return 'just now';if(m<60)return m+' min ago';const h=Math.round(m/60);if(h<24)return h+' hr ago';return new Date(iso).toLocaleDateString()}
